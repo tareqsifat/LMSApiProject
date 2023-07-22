@@ -35,10 +35,11 @@ class AuthenticationController extends Controller
             'role' => User::USER,
             'password' => Hash::make($request->input('password')),
         ]);
-        UserMailJob::dispatch($user);
+        // UserMailJob::dispatch($user);
 
+        $token = $user->createToken('lmsApi')->accessToken;
 
-        $token = $user->createToken('lmsToken')->plainTextToken;
+        // $token = $user->createToken('lmsToken')->accessToken;
 
         $response = [
             'user' => $user,
@@ -49,6 +50,7 @@ class AuthenticationController extends Controller
         return response()->json($response);
     }
 
+
     /**
      * Summary of login
      * @param \Illuminate\Http\Request $request
@@ -58,7 +60,7 @@ class AuthenticationController extends Controller
     {
         $request->validate([
             'email' => 'required',
-            'password' => 'required|min:8|confirmed',
+            'password' => 'required|min:8',
         ]);
 
         $user = User::where('email', $request->input('email'))->first();
@@ -67,12 +69,12 @@ class AuthenticationController extends Controller
             return response()->json(['message' => 'Email & Password dosen\t match']);
         }
 
-        $token = $user->createToken('lmsToken')->plainTextToken;
+        $token = $user->createToken('lmsToken')->accessToken;
 
         $response = [
             'user' => $user,
             'token' => $token,
-            'message' => 'user createsd successfully',
+            'message' => 'Login successfully',
         ];
 
         return response()->json($response);
@@ -82,8 +84,9 @@ class AuthenticationController extends Controller
      * Summary of logout
      * @return void
      */
-    public function logout()
+    public function logout(Request $request)
     {
-        Auth::user()->tokens()->delete;
+        $request->user()->token()->revoke();
+        return response()->json(['message=>loged out']);
     }
 }
